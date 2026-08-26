@@ -193,7 +193,8 @@ function track(evt){
   try { if (navigator.sendBeacon && navigator.sendBeacon(u)) return; } catch (e) {}
   try { new Image().src = u; } catch (e) {}
 }
-if (!/[?&]edit=1/.test(location.search)) track('view');
+function tdSkip(){ try { return localStorage.getItem('td-notrack')==='1'; } catch(e){ return false; } }
+if (!/[?&]edit=1/.test(location.search) && !tdSkip()) track('view');
 Array.prototype.forEach.call(document.querySelectorAll('.yr'), function(e){ e.textContent = new Date().getFullYear(); });
 </script>
 <script>window.JV_EDITOR={ site:"td-rules-thanks", page:1, noAuth:true, pwKey:"trtdad", api:"https://jv-dashboard-chi.vercel.app/api/content" };</script>

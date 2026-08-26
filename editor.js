@@ -1247,7 +1247,7 @@
   // contentNodes + the click-ignore list) and reuses duplicateActive /
   // moveActive / removeActive, so behaviour matches the toolbar exactly.
   var hoverTools = null, hoverEl = null, hoverHideTimer = null;
-  function scheduleHoverHide() { clearTimeout(hoverHideTimer); hoverHideTimer = setTimeout(hideHoverTools, 180); }
+  function scheduleHoverHide() { clearTimeout(hoverHideTimer); hoverHideTimer = setTimeout(hideHoverTools, 650); }
   function hideHoverTools() {
     clearTimeout(hoverHideTimer);
     if (hoverEl && hoverEl.classList) hoverEl.classList.remove("jv-hovered");
@@ -1349,6 +1349,20 @@
   function onHoverMove(e) {
     if (!editMode || !hoverTools) return;
     if (e.target && e.target.closest && e.target.closest(".jv-hover-tools")) { clearTimeout(hoverHideTimer); return; }
+
+    // Heading for the open bar? Leave everything alone until the pointer either
+    // lands on it or clearly veers off. Without this, crossing the gap between a
+    // block and its bar retargeted or hid the bar before you could click it.
+    if (hoverEl && hoverTools.classList.contains("show")) {
+      var b = hoverTools.getBoundingClientRect();
+      var pad = 26;
+      if (e.clientX >= b.left - pad && e.clientX <= b.right + pad &&
+          e.clientY >= b.top - pad && e.clientY <= b.bottom + pad) {
+        clearTimeout(hoverHideTimer);
+        return;
+      }
+    }
+
     var t = hoverTargetFrom(e.target);
     if (!t) { scheduleHoverHide(); return; }
     hoverNode = e.target;

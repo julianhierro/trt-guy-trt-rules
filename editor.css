@@ -458,3 +458,11 @@ body.jv-editing .jv-col:hover{outline-color:rgba(26,92,255,.75)}
 @media (min-width: 1180px){
   .jv-section-tools { left: -12px; transform: translateX(-100%); max-width: none; }
 }
+
+/* A transparent bridge on the block side of the hover bar, so the pointer never
+   crosses dead space on its way over. Purely a hit-area; nothing is drawn. */
+.jv-hover-tools{ position: fixed; }
+.jv-hover-tools::before{
+  content:""; position:absolute; top:-10px; bottom:-10px; left:-22px; right:-10px;
+  z-index:-1;
+}

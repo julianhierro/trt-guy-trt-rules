@@ -330,7 +330,7 @@ var ASSET = 'rules.html';
       if (!res.ok) throw new Error('bad status');
       track('optin');
       try { localStorage.setItem(UNLOCK_KEY, '1'); } catch (e2) {}
-      location.href = '/thanks.html';
+      location.href = 'thanks.html';
     } catch (e3) {
       btn.disabled = false; btn.innerHTML = label;
       err.textContent = 'That didn\'t go through. Give it one more try.';

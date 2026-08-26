@@ -35,7 +35,7 @@
   // Where "← Control Center" goes. Overridable via ?cc=<url> when the dashboard opens the editor.
   var CONTROL_CENTER_URL = (function () {
     try { var c = new URLSearchParams(location.search).get("cc"); if (c && /^https?:\/\//.test(c)) return c; } catch (e) {}
-    return "https://jv-dashboard-chi.vercel.app/";
+    return "https://julianhierro.github.io/trt-guy-control/";
   })();
 
   // ── A/B variants ──────────────────────────────────────────────────────────

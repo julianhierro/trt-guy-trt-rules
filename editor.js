@@ -1277,6 +1277,23 @@
     var blk = node.closest("p,h1,h2,h3,h4,h5,h6,li,figure,blockquote,img,article,.jv-cols");
     if (blk && blk.hasAttribute("data-eid") && blk.tagName !== "SECTION") return { el: blk, kind: "block" };
 
+    // A block-level <div> — a card, a callout, a boxed CTA — matched none of the
+    // tags above, so it fell through to `return null` and never got a hover bar.
+    // That made whole sections impossible to delete or move: you could empty one
+    // out child by child, but the container itself stayed put forever.
+    // Walk out to the outermost element that still sits inside the page's content
+    // wrapper and offer THAT, so 🗑 removes the entire block. Runs after the
+    // paragraph checks, so hovering text still targets the text.
+    var host = node.closest(".wrap, .sheet, main, article, section, body");
+    if (host) {
+      var top = node;
+      while (top && top.parentElement && top.parentElement !== host) top = top.parentElement;
+      if (top && top !== host && top.nodeType === 1 && top.hasAttribute && top.hasAttribute("data-eid")
+          && !top.closest(".jv-toolbar, .jv-launcher, [data-noedit]")) {
+        return { el: top, kind: "block" };
+      }
+    }
+
     // A standalone button/link that isn't inside a <section> used to fall through
     // to `return null`, so it never got a hover bar — and with no hover bar there
     // was no ⚡, i.e. no way to set where it points. Catch it here, after the

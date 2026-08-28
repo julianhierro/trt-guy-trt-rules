@@ -699,6 +699,10 @@
       case "button": return '<div style="text-align:center;padding:18px 24px;"><a href="#" data-etext="1" style="display:inline-block;background:#1a5cff;color:#fff;font-family:Montserrat,sans-serif;font-weight:800;padding:14px 34px;border-radius:8px;text-decoration:none;">Click me</a></div>';
       case "image": return '<div style="text-align:center;padding:16px 24px;"><img src="' + payload + '" alt="" style="max-width:100%;height:auto;border-radius:12px;"></div>';
       case "video": return '<div style="max-width:860px;margin:0 auto;padding:16px 24px;"><div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;background:#000;"><iframe src="' + payload + '" style="position:absolute;inset:0;width:100%;height:100%;border:0;" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen></iframe></div></div>';
+      case "bullets": return '<div style="max-width:1060px;margin:0 auto;padding:14px 24px;">' +
+        '<div data-etext="1" style="font-family:Inter,sans-serif;font-size:1.05rem;line-height:1.7;">' +
+        LIST_HTML(["First point — click to edit, then press Enter for the next one.",
+                   "Second point.", "Third point."]) + '</div></div>';
       case "spacer": return '<div style="height:48px;"></div>';
       case "faq": return '<div class="faq-item">' +
         '<button class="faq-question" type="button" onclick="if(window.toggleFaq)toggleFaq(this)" data-etext="1">Your new question goes here? <span class="arrow">+</span></button>' +
@@ -707,6 +711,53 @@
     }
     return "";
   }
+  /* ── Bullet lists ─────────────────────────────────────────────────────────
+     The list is built INSIDE the edited element, never by swapping that
+     element's tag. A published edit is one element's innerHTML, so a <div>
+     that turned itself into a <ul> would look right on screen and revert on
+     the next load. Bullet styling is inline because several of these pages set
+     `ul{list-style:none}` globally for their nav. */
+  function LIST_HTML(lines) {
+    return '<ul style="list-style:disc;margin:0;padding-left:1.35em;">' +
+      lines.map(function (s) { return "<li style=\"margin:0 0 .45em;\">" + s + "</li>"; }).join("") +
+      "</ul>";
+  }
+  function listIn(el) { return el ? el.querySelector("ul,ol") : null; }
+
+  // Toggle the element between running text and a bullet list. Every line
+  // becomes a bullet; going back, every bullet becomes a line.
+  function toggleBullets(el) {
+    if (!el) return;
+    pushUndo();
+    var ul = listIn(el);
+    if (ul) {
+      var back = Array.prototype.map.call(ul.querySelectorAll("li"), function (li) { return li.innerHTML.trim(); })
+        .filter(function (s) { return s; });
+      el.innerHTML = back.join("<br>");
+      flash("Back to plain text");
+    } else {
+      var lines = el.innerHTML
+        .replace(/<\/(p|div|li|h[1-6])>/gi, "<br>")
+        .replace(/<(p|div|li|h[1-6])[^>]*>/gi, "")
+        .split(/<br\s*\/?>/i)
+        .map(function (s) { return s.replace(/&nbsp;/g, " ").trim(); })
+        .filter(function (s) { return s && s.replace(/<[^>]+>/g, "").trim(); });
+      if (!lines.length) lines = ["First point", "Second point", "Third point"];
+      el.innerHTML = LIST_HTML(lines);
+      flash("Bulleted — press Enter at the end of a bullet for the next one");
+    }
+    el.setAttribute("data-edited-style", "1");
+    scheduleDraft();
+  }
+  // What the ⋮≡ button acts on: the text element under the pointer, or the one
+  // inside the block it widened to.
+  function bulletTarget(node, block) {
+    var t = node && node.closest ? node.closest("[data-etext]") : null;
+    if (t) return t;
+    if (block && block.hasAttribute && block.hasAttribute("data-etext")) return block;
+    return block ? block.querySelector("[data-etext]") : null;
+  }
+
   function toEmbed(u) {
     u = (u || "").trim();
     var yt = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
@@ -969,6 +1020,12 @@
     var containers = [root];
     Array.prototype.forEach.call(root.querySelectorAll("section, .wrap"), function (c) {
       if (c.closest(".jv-toolbar, .jv-outline, .jv-preview-overlay, [data-noedit]")) return;
+      // A grid or flex container lays its children out itself, and a strip
+      // dropped in among them becomes a cell of its own - a two-column card
+      // grid collapses to one column and the edit view stops matching the
+      // live page. Add sections around such a block, not inside it.
+      var disp = getComputedStyle(c).display;
+      if (disp === "grid" || disp === "inline-grid" || disp === "flex" || disp === "inline-flex") return;
       containers.push(c);
     });
     containers.forEach(function (c) {
@@ -1339,7 +1396,7 @@
     hoverEl = el;
     if (el.classList) el.classList.add("jv-hovered");
     var isImg = kind === "img";
-    ["dup", "drag"].forEach(function (k) {       // images drag directly (no handle); only 🗑 shows
+    ["dup", "drag", "list"].forEach(function (k) {   // images drag directly (no handle); only 🗑 shows
       var b = hoverTools.querySelector(".jv-ht-" + k); if (b) b.style.display = isImg ? "none" : "";
     });
     hoverTools.classList.add("show");
@@ -1737,6 +1794,7 @@
     hoverTools.innerHTML =
       '<button type="button" class="jv-ht jv-ht-add" title="Add a new section directly below this">＋</button>' +
       '<button type="button" class="jv-ht jv-ht-link" title="What this button does — pop-up, link, or scroll">⚡</button>' +
+      '<button type="button" class="jv-ht jv-ht-list" title="Turn this text into a bullet list (and back)">•≡</button>' +
       '<button type="button" class="jv-ht jv-ht-dup" title="Duplicate">⧉</button>' +
       '<button type="button" class="jv-ht jv-ht-drag" title="Drag to reorder" draggable="true">✥</button>' +
       '<button type="button" class="jv-ht jv-ht-del" title="Delete">🗑</button>';
@@ -1748,6 +1806,12 @@
       if (!hoverEl) return;
       var el = (hoverNode && hoverNode.closest && hoverNode.closest("a,button")) ? hoverNode.closest("a,button") : hoverEl;
       openActionMenu(el, hoverTools.getBoundingClientRect());
+    });
+    hoverTools.querySelector(".jv-ht-list").addEventListener("click", function (e) {
+      e.stopPropagation(); e.preventDefault();
+      var t = bulletTarget(hoverNode, hoverEl);
+      if (!t) { flash("Point at the text you want bulleted"); return; }
+      setActive(t); toggleBullets(t); hideHoverTools();
     });
     hoverTools.querySelector(".jv-ht-add").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); if (!hoverEl) return; addSectionBelow(hoverNode || hoverEl); hideHoverTools(); });
     hoverTools.querySelector(".jv-ht-dup").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); if (!hoverEl) return; setActive(hoverEl); duplicateActive(); hideHoverTools(); });
@@ -2137,7 +2201,7 @@
       + [["section","▭ Section"],["cols1","▯ 1 column"],["cols2","▮▮ 2 columns"],["cols3","▮▮▮ 3 columns"],["cols4","▮▮▮▮ 4 columns"],["spacer","↕ Spacer"],["divider","— Divider"]]
         .map(function (b) { return '<button type="button" data-bt="' + b[0] + '">' + b[1] + "</button>"; }).join("")
       + '<div class="jv-addgrp">Content</div>'
-      + [["h1","H1 Heading"],["h2","H2 Heading"],["h3","H3 Heading"],["h4","H4 Heading"],["text","¶ Text"],["button","⬚ Button"],["image","🖼 Image"],["video","🎬 Video"],["faq","❓ FAQ"]]
+      + [["h1","H1 Heading"],["h2","H2 Heading"],["h3","H3 Heading"],["h4","H4 Heading"],["text","¶ Text"],["bullets","• Bullet list"],["button","⬚ Button"],["image","🖼 Image"],["video","🎬 Video"],["faq","❓ FAQ"]]
         .map(function (b) { return '<button type="button" data-bt="' + b[0] + '">' + b[1] + "</button>"; }).join("");
     document.body.appendChild(addMenu);
     var addBtn = bar.querySelector(".jv-add");

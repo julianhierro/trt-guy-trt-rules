@@ -427,6 +427,13 @@ body.jv-editing .jv-col:hover{outline-color:rgba(26,92,255,.75)}
   .jv-inserter .jv-ins-btn { font-size: 11px; padding: 7px 11px; }
 }
 
+.jv-hover-tools .jv-ht-list { background: rgba(255,255,255,.14); font-size: 12px; letter-spacing: -.05em; }
+.jv-hover-tools .jv-ht-list:hover { background: rgba(26,92,255,.85); }
+/* A list built by the editor carries its bullets inline, because several of
+   these pages kill list markers globally for their nav. This is only a floor
+   for anything that arrives without them. */
+[data-etext] ul:not([style*="list-style"]) { list-style: disc; padding-left: 1.35em; }
+[data-etext] ol:not([style*="list-style"]) { list-style: decimal; padding-left: 1.5em; }
 .jv-hover-tools .jv-ht-link { background: rgba(255,255,255,.14); }
 .jv-hover-tools .jv-ht-link:hover { background: rgba(26,92,255,.85); }
 

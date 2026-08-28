@@ -1965,6 +1965,9 @@
             '<button class="jv-btn jv-al" data-a="center" type="button" title="Align center">☷</button>' +
             '<button class="jv-btn jv-al" data-a="right" type="button" title="Align right">☲</button></span>' +
             '<button class="jv-btn jv-clear" type="button" title="Clear formatting">Clear</button></div>' +
+          '<div class="jv-pop-row"><span class="jv-pop-lbl">List</span>' +
+            '<button class="jv-btn jv-bullets" type="button" title="Turn this text into a bullet list, or back again">&bull; Bullets</button>' +
+            '<span class="jv-pop-note">every line becomes a bullet</span></div>' +
           '<div class="jv-pop-row"><span class="jv-pop-lbl">Link</span>' +
             '<button class="jv-btn jv-link" type="button" title="Turn the selected text into a link">🔗 Link</button>' +
             '<button class="jv-btn jv-unlink" type="button" title="Remove the link from the selected text">Remove</button></div>' +
@@ -2125,6 +2128,16 @@
     ui.bold.addEventListener("click", function () { applyStyle("bold"); syncToolbar(); });
     ui.italic.addEventListener("click", function () { applyStyle("italic"); syncToolbar(); });
     bar.querySelectorAll(".jv-al").forEach(function (b) { b.addEventListener("click", function () { if (activeEl) { pushUndo(); setAlign(activeEl, b.dataset.a); markStyled(activeEl); scheduleDraft(); syncToolbar(); } }); });
+    bar.querySelector(".jv-bullets").addEventListener("click", function () {
+      // Acts on whatever is selected. Clicking a bullet selects the <li>, so
+      // walk up to the element that owns the whole list.
+      var el = activeEl;
+      if (el && el.tagName === "LI") el = el.closest("[data-etext]") || el.parentElement;
+      if (el && !el.hasAttribute("data-etext")) el = el.closest("[data-etext]") || el.querySelector("[data-etext]");
+      if (!el) { flash("Click the text you want bulleted first"); return; }
+      toggleBullets(el);
+      syncToolbar();
+    });
     bar.querySelector(".jv-clear").addEventListener("click", function () {
       if (!activeEl) { flash("Click some text first"); return; }
       pushUndo();

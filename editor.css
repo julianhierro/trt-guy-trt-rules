@@ -428,6 +428,7 @@ body.jv-editing .jv-col:hover{outline-color:rgba(26,92,255,.75)}
 }
 
 .jv-hover-tools .jv-ht-list { background: rgba(255,255,255,.14); font-size: 12px; letter-spacing: -.05em; }
+.jv-toolbar .jv-pop-note { font-size: 10.5px; color: rgba(255,255,255,.44); margin-left: 8px; }
 .jv-hover-tools .jv-ht-list:hover { background: rgba(26,92,255,.85); }
 /* A list built by the editor carries its bullets inline, because several of
    these pages kill list markers globally for their nav. This is only a floor

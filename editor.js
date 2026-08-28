@@ -552,6 +552,9 @@
   function setAlign(el, value) {
     if (!el) return;
     el.style.textAlign = value;
+    // A list inside this block follows the alignment, but its bullets always
+    // keep one left edge — centred bullet text is never what anyone means.
+    if (typeof alignList === "function") alignList(el, value);
     var disp = getComputedStyle(el).display;
     if (disp === "flex" || disp === "inline-flex") {
       var dir = getComputedStyle(el).flexDirection || "row";
@@ -718,9 +721,24 @@
      the next load. Bullet styling is inline because several of these pages set
      `ul{list-style:none}` globally for their nav. */
   function LIST_HTML(lines) {
-    return '<ul style="list-style:disc;margin:0;padding-left:1.35em;">' +
+    return '<ul style="list-style:disc;margin:0;padding-left:1.35em;text-align:left;">' +
       lines.map(function (s) { return "<li style=\"margin:0 0 .45em;\">" + s + "</li>"; }).join("") +
       "</ul>";
+  }
+  // Bullets need one left edge to read as a list. Inside a centred block that
+  // means the LIST stays centred while its TEXT goes left — an inline-block —
+  // rather than the text centring itself and the bullets scattering.
+  function alignList(el, how) {
+    var ul = listIn(el); if (!ul) return;
+    var want = how || getComputedStyle(el).textAlign || "left";
+    ul.style.textAlign = "left";
+    if (want === "center" || want === "right") {
+      ul.style.display = "inline-block";
+      ul.style.marginLeft = ""; ul.style.marginRight = "";
+    } else {
+      ul.style.display = "block";
+      ul.style.marginLeft = "0"; ul.style.marginRight = "auto";
+    }
   }
   function listIn(el) { return el ? el.querySelector("ul,ol") : null; }
 
@@ -744,6 +762,7 @@
         .filter(function (s) { return s && s.replace(/<[^>]+>/g, "").trim(); });
       if (!lines.length) lines = ["First point", "Second point", "Third point"];
       el.innerHTML = LIST_HTML(lines);
+      alignList(el);
       flash("Bulleted — press Enter at the end of a bullet for the next one");
     }
     el.setAttribute("data-edited-style", "1");
